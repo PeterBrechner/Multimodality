@@ -15,12 +15,12 @@ loginc = log( gammainc(lambda*Dmax,1+mu+ii) -...
     gammainc(lambda*Dmin,1+mu+ii) );
 loggam = gammaln(1+mu+ii); % use gammaln to avoid overflow
 %tol = uncertainty
-tol = sqrt(chi2inv(conf,3))*calcError(sqError(idx1), bins(idx1), ii)
+tol = sqrt(chi2inv(conf,3))*calcError(sqError(idx1), bins(idx1), ii);
 %For bimodality, need obs-tol > fit/alpha
 %    Define fit=alpha*(tol+fit/alpha) for mathematical simplicity
-fit = N0 ./ ( lambda.^(1+mu+ii) ) .* exp(loginc+loggam) + alpha*tol
+fit = N0 ./ ( lambda.^(1+mu+ii) ) .* exp(loginc+loggam) + alpha*tol;
 %Calculate the observed iith moment
-obs = intMethods(1, sd(idx1), bins(idx1), bins_diff(idx1), ii)
+obs = intMethods(1, sd(idx1), bins(idx1), bins_diff(idx1), ii);
 
 minD = bins(1)-0.5*bins_diff(1);
 obs2 = intMethods(1, sd(idx1), bins(idx1), bins_diff(idx1), ii2+1);

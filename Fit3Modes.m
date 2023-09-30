@@ -39,38 +39,47 @@ for ii = 1:3
     sigma3(:,ii) = sigmas(error,bins,idx1,idx2,3,fit_moments(ii));
 end
 
-options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',1575,'MaxIter',75);
+%options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',1575,'MaxIter',75);
+options = optimset('tolfun',1e-4,'tolx',1e-2,'MaxFunEvals',2250,'MaxIter',90,'display','off');
 for j=1:sz(1)
-    j
+    if mod(j,100) == 1
+        disp(strcat("Trimodal Fits ",num2str(round(100*(j-1)/sz(1))),"% complete: ", string(datetime("now"))));
+    end
     upper = [1, 9, 2000, 10, 9, 400, 1, 9, 400];
-    lower = [0, -1, 250, 0, -1, 0, 0, -1, 0];
+    lower = [0, -1, 200, 0, -1, 0, 0, -1, 0];
     Dcoff1 = bins(1+idx1(j))-0.5*bins_diff(1+idx1(j));
     Dcoff2 = bins(idx2(j))+0.5*bins_diff(idx2(j));
     Dmin = bins(1)-0.5*bins_diff(1);
     Dmax = bins(end)+0.5*bins_diff(end);
     starting = find_starting(mag(j,:), Dcoff1, Dcoff2, Dmin, Dmax);
     if idx1(j) == 0
+        disp('Error: Not Trimodal')
         upper = upper(4:9);
         lower = lower(4:9);
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
+        [minparams(j,:), minchisq, ~, exitflag, ~] =...
             lsqnonlin(@fit_2_modes, starting, lower,...
             upper, options, alpha, Dmin, Dmax, Dcoff2,...
             M2(j,fit_moments+1), M3(j,fit_moments+1),...
             fit_moments, sigma2(j,:), sigma3(j,:));
+        disp(minchisq)
+        disp(exitflag)
         minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
         minparams(j,4) = minparams(j,4)/gamma(minparams(j,5)+2)*minparams(j,6)^(minparams(j,5)+2);
     elseif idx2(j) == upr
+        disp('Error: Not Trimodal')
         upper = upper(1:6);
         lower = lower(1:6);
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
+        [minparams(j,:), minchisq, ~, exitflag, ~] =...
             lsqnonlin(@fit_2_modes, starting, lower,...
             upper, options, alpha, Dmin, Dmax, Dcoff1,...
             M(j,fit_moments+1), M2(j,fit_moments+1),...
             fit_moments, sigma(j,:), sigma2(j,:));
+        disp(minchisq)
+        disp(exitflag)
         minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
         minparams(j,4) = minparams(j,4)/gamma(minparams(j,5)+2)*minparams(j,6)^(minparams(j,5)+2);
     else
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
+        [minparams(j,:), ~, ~, ~, ~] =...
             lsqnonlin(@fit_3_modes, starting, lower,...
             upper, options, alpha, Dmin, Dmax, Dcoff1, Dcoff2,...
             M(j,1:5), M2(j,1:5), M3(j,1:5),...

@@ -11,15 +11,14 @@ minparams = zeros(sz(1),6);
 %idx1 = min(idx1,upr);
 %idx2 = min(idx2,upr);
 
-upr = zeros(sz(1),1);
 for j=1:sz(1)
-    if idx2(j) ~= bins(end)+0.5*bins_diff(end)
-        upr(j) = calcMax(sd(j,:),bins,bins_diff,alpha);
+    if idx2(j) == bins(end)+0.5*bins_diff(end)
+        upr(j) = sz(2);
+    else
         sd(j,upr(j):end) = 0;
         error(j,upr(j):end) = 0;
     end
 end
-upr = sz(2);
 
 M = zeros(sz(1),7);
 M2 = M;
@@ -32,7 +31,7 @@ for ii = 0:6
         end
         M2(j,ii+1) = intMethods(intmethod, sd(j,(idx1(j)+1):idx2(j)),...
             bins((idx1(j)+1):idx2(j)), bins_diff((idx1(j)+1):idx2(j)), ii);
-        if idx2(j) ~= upr
+        if idx2(j) ~= upr(j)
             M3(j,ii+1) = intMethods(intmethod, sd(j,(idx2(j)+1):end),...
                 bins((idx2(j)+1):end), bins_diff((idx2(j)+1):end), ii);
         end
@@ -48,31 +47,37 @@ for ii = 1:3
     sigma3(:,ii) = sigmas(error,bins,idx1,idx2,3,fit_moments(ii));
 end
 
-options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',1575,'MaxIter',75);
+%options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',1575,'MaxIter',75);
+options = optimset('tolfun',1e-4,'tolx',1e-2,'MaxFunEvals',1140,'MaxIter',60,'display','off');
 for j=1:sz(1)
-    j
     upper = [1, 9, 2000, 10, 9, 400, 1, 9, 400];
-    lower = [0, -1, 250, 0, -1, 0, 0, -1, 0];
+    lower = [0, -1, 200, 0, -1, 0, 0, -1, 0];
     Dcoff1 = bins(1+idx1(j))-0.5*bins_diff(1+idx1(j));
     Dcoff2 = bins(idx2(j))+0.5*bins_diff(idx2(j));
     Dmin = bins(1)-0.5*bins_diff(1);
     Dmax = bins(end)+0.5*bins_diff(end);
     starting = find_starting(mag(j,:), Dcoff1, Dcoff2, Dmin, Dmax);
     if idx1(j) == 0
+        if mod(j,100) == 1
+            disp(strcat("Bimodal2 Fits ",num2str(round(100*(j-1)/sz(1))),"% complete: ", string(datetime("now"))));
+        end
         upper = upper(4:9);
         lower = lower(4:9);
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
-            lsqnonlin(@fit_2_modes, starting, lower,...
+        [minparams(j,:), ~, ~, ~, ~] =...
+            lsqnonlin(@fit_bimodal2, starting, lower,...
             upper, options, alpha, Dmin, Dmax, Dcoff2,...
             M2(j,1:5), M3(j,1:5),...
             fit_moments, sigma2(j,:), sigma3(j,:));
 %        minparams = starting;
         minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
         minparams(j,4) = minparams(j,4)/gamma(minparams(j,5)+2)*minparams(j,6)^(minparams(j,5)+2);
-    elseif idx2(j) == upr
+    else
+        if mod(j,100) == 1
+            disp(strcat("Bimodal1 Fits ",num2str(round(100*(j-1)/sz(1))),"% complete: ", string(datetime("now"))));
+        end
         upper = upper(1:6);
         lower = lower(1:6);
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
+        [minparams(j,:), ~, ~, ~, ~] =...
             lsqnonlin(@fit_2_modes, starting, lower,...
             upper, options, alpha, Dmin, Dmax, Dcoff1,...
             M(j,1:5), M2(j,1:5),...
@@ -80,14 +85,5 @@ for j=1:sz(1)
 %        minparams = starting;
         minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
         minparams(j,4) = minparams(j,4)/gamma(minparams(j,5)+2)*minparams(j,6)^(minparams(j,5)+2);
-    else
-        [minparams(j,:), minchisq(j), ~, exitflag, ~] =...
-            lsqnonlin(@fit_3_modes, starting, lower,...
-            upper, options, alpha, Dmin, Dmax, Dcoff1, Dcoff2,...
-            M(j,fit_moments+1), M2(j,fit_moments+1), M3(j,fit_moments+1),...
-            fit_moments, sigma(j,:), sigma2(j,:), sigma3(j,:));
-        minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
-        minparams(j,4) = minparams(j,4)/gamma(minparams(j,5)+2)*minparams(j,6)^(minparams(j,5)+2);
-        minparams(j,7) = minparams(j,7)/gamma(minparams(j,8)+2)*minparams(j,9)^(minparams(j,8)+2);
     end
 end

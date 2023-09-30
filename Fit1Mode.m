@@ -1,4 +1,4 @@
-function [minparams] = FitCenterMode(alpha, idx1, idx2, intmethod, sd, bins, bins_diff, fit_moments, error, upr)
+function [minparams] = Fit1Mode(idx1, idx2, intmethod, sd, bins, bins_diff, fit_moments, error, upr)
 
 sz = size(sd);
 
@@ -32,26 +32,29 @@ starting = [2e-3 3 120]; % initial guess
 upper = [10 9 400];
 %lower = [1e-6 -1 0];
 lower = [0 -1 0];
-options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',100,'MaxIter',20);
+%options = optimset('tolfun',1e-16,'tolx',1e-10,'MaxFunEvals',100,'MaxIter',20);
+options = optimset('tolfun',1e-4,'tolx',1e-2,'MaxFunEvals',150,'MaxIter',30,'display','off');
 for j=1:sz(1)
-    j
+    if mod(j,100) == 1
+        disp(strcat("Fit1Mode ",num2str(round(100*(j-1)/sz(1))),"% complete: ", string(datetime("now"))));
+    end
     starting(1) = M(j,2);
     Dcoff1 = bins(1+idx1(j))-0.5*bins_diff(1+idx1(j));
     Dcoff2 = bins(idx2(j))+0.5*bins_diff(idx2(j));
     Dmin = bins(1)-0.5*bins_diff(1);
     Dmax = bins(end)+0.5*bins_diff(end);
-    [minparams(j,:), minchisq, ~, exitflag, ~] =...
+    [minparams(j,:), ~, ~, ~, ~] =...
         lsqnonlin(@fit_1_mode, starting, lower,...
         upper, options, Dmin, Dmax, Dcoff1, Dcoff2, M(j,fit_moments+1),...
         fit_moments, sigma(j,:)); % force -1 < mu < 5
     minparams(j,1) = minparams(j,1)/gamma(minparams(j,2)+2)*minparams(j,3)^(minparams(j,2)+2);
-    ginc0 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+1)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+1);
-    g0 = ginc0*minparams(j,1)*gamma(minparams(j,2)+1)/minparams(j,3)^(minparams(j,2)+1)
-    a0 = M(j,1)
-    ginc2 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+3)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+3);
-    g2 = ginc2*minparams(j,1)*gamma(minparams(j,2)+3)/minparams(j,3)^(minparams(j,2)+3)
-    a2 = M(j,3)
-    ginc4 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+5)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+5);
-    g4 = ginc4*minparams(j,1)*gamma(minparams(j,2)+5)/minparams(j,3)^(minparams(j,2)+5)
-    a4 = M(j,5)
+    %ginc0 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+1)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+1);
+    %g0 = ginc0*minparams(j,1)*gamma(minparams(j,2)+1)/minparams(j,3)^(minparams(j,2)+1);
+    %a0 = M(j,1);
+    %ginc2 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+3)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+3);
+    %g2 = ginc2*minparams(j,1)*gamma(minparams(j,2)+3)/minparams(j,3)^(minparams(j,2)+3);
+    %a2 = M(j,3);
+    %ginc4 = gammainc(minparams(j,3)*Dmax,minparams(j,2)+5)-gammainc(minparams(j,3)*Dmin,minparams(j,2)+5);
+    %g4 = ginc4*minparams(j,1)*gamma(minparams(j,2)+5)/minparams(j,3)^(minparams(j,2)+5);
+    %a4 = M(j,5);
 end

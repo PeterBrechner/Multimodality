@@ -1,6 +1,6 @@
 function [ratio, minparams, overlap] = testCutoff(alpha, b, minparams,...
     minparams2, coff, border, inner, lows, intmethod, sd, bins,...
-    bins_diff, sqError, iwc, rawcount, conf, cts, lamlam, upr)
+    bins_diff, sqError, rawcount, conf, cts, lamlam, upr)
 
 %Outputs:
 %ratio is the output of the dip test
@@ -28,44 +28,44 @@ for j=1:sz(1)
     rawcount(j,upr(j):end) = 0;
     sqError(j,upr(j):end) = 0;
 end
-upr
+%upr
 overlap = ones(sz(1),1);
 tr = ones(sz(1),1);
 
 %hi is the bin index of the test cutoff
-hi = max(find(bins < coff));
+hi = find(bins < coff,1,'last');
 vecHi = hi*ones(sz(1),1);
 
 %idx0 is the bin indices between the largest small cutoff...
 %    and the smallest large cutoff
-idx0 = find(bins > inner(1) & bins < inner(2));
+%idx0 = find(bins > inner(1) & bins < inner(2));
 
 %idxa is the bin indices below the cutoff
-idxa = find(bins < coff);
+%idxa = find(bins < coff);
 
 %idxb is the bin indices above the cutoff
-idxb = find(bins > coff);
+%idxb = find(bins > coff);
 
 %sums checks for sufficient counts in each mode
 sums = zeros(sz(1),1);
 for j=1:sz(1)
-    sums(j) = sum(rawcount(j,idx0));
-    xxxx = find(rawcount(j,idx0));
-    if length(xxxx) < 3
-        sums(j) = 0;
-    end
-    if b(j) == sz(2) %no large diameter mode
-        lo = min(find(bins > inner(1)));
-        sums(j) = sum(rawcount(j,lo:end));
-        xxxx = find(rawcount(j,lo:end));
-        if length(xxxx) < 3
+    if coff < border
+        sums(j) = sum(rawcount(j,(1+hi):b(j)));
+        xxxx = find(rawcount(j,(1+hi):b(j)));
+        xxxy = find(rawcount(j,1:hi));
+        xxxz = find(rawcount(j,(1+hi):end));
+        if length(xxxx) < 3 || length(xxxy) < 3 || length(xxxz) < 3
             sums(j) = 0;
         end
     end
-    xxxy = find(rawcount(j,idxa));
-    xxxz = find(rawcount(j,idxb));
-    if length(xxxy) < 3 | length(xxxz) < 3
-        sums(j) = 0;
+    if coff > border
+        sums(j) = sum(rawcount(j,(1+b(j)):hi));
+        xxxx = find(rawcount(j,(1+b(j)):hi));
+        xxxy = find(rawcount(j,1:hi));
+        xxxz = find(rawcount(j,(1+hi):end));
+        if length(xxxx) < 3 || length(xxxy) < 3 || length(xxxz) < 3
+            sums(j) = 0;
+        end
     end
 end
 
@@ -76,13 +76,13 @@ idx0 = find(sums >= cts);
 if coff < border
 %lambda for the small diameter mode is inversely proportional to coff
 %    so we can take advantage
-lamlam = lamlam*inner(1)/coff;
-minparams(idx0,:) = FitCenterMode(alpha, vecHi(idx0), b(idx0), intmethod,...
-    sd(idx0,:), bins, bins_diff, lows, sqError(idx0,:), upr);
+    lamlam = lamlam*inner(1)/coff;
+    minparams(idx0,:) = FitCenterMode(vecHi(idx0), b(idx0), intmethod, ...
+        sd(idx0,:), bins, bins_diff, lows, sqError(idx0,:), upr(idx0));
 end
 if coff > border
-minparams(idx0,:) = FitCenterMode(alpha, b(idx0), vecHi(idx0), intmethod,...
-    sd(idx0,:), bins, bins_diff, lows, sqError(idx0,:), upr);
+    minparams(idx0,:) = FitCenterMode(b(idx0), vecHi(idx0), intmethod, ...
+        sd(idx0,:), bins, bins_diff, lows, sqError(idx0,:), upr(idx0));
 end
 
 %Store gamma fit parameters for center mode as N0, mu, lambda
@@ -126,7 +126,7 @@ for j=1:sz(1)
     ml = bins(idx2(1))-0.5*bins_diff(idx2(1));
     ul = bins(idx3(1))-0.5*bins_diff(idx3(1));
     uu = bins(idx3(end))+0.5*bins_diff(idx3(end));
-    if tr(j) & sum(rawcount(j,idx1)) >= 0.5 & sum(rawcount(j,idx2)) >= 0 & sum(rawcount(j,idx3)) >= 0.5
+    if tr(j) && sum(rawcount(j,idx1)) >= 0.5 && sum(rawcount(j,idx2)) >= 0 && sum(rawcount(j,idx3)) >= 0.5
         [ratio(j),overlap(j)] = dipTest(idx1, idx2, idx3, ll, ml, ul, uu,...
             N01(j), mu1(j), lambda1(j), conf, alpha, overlap(j), sd(j,:),...
             bins, bins_diff, sqError(j,:), 0);

@@ -1,5 +1,5 @@
 function [tr, ba, bb, un, hix, hix2, mp3, mp4, mp5, mp6] =...
-    Input(time, fit_moments, bins, bins_diff, sd, iwc, rawcount, sqError)
+    Input(time, fit_moments, bins, bins_diff, sd, iwc, rawcount, sqError, idx)
 
 
 %Call this function to run TrimodalityTest.m
@@ -50,7 +50,12 @@ function [tr, ba, bb, un, hix, hix2, mp3, mp4, mp5, mp6] =...
     %bin_concentration = sd(bins)*bins_diff(bins)
     %note: ensure correct order of magnitude given units above
         %bin_concentration = 10^4*sd(bins)*bins_diff(bins)
-
+%idx = indices (one for each SD) separating smaller habits (sphere, column, 
+ %plate) from larger habits (graupel, dendrite, aggregate)
+    %if habits are unknown, or if the use of habits to control bimodal2
+     %parameters is undesired, input anything here
+    %Note: this feature was added while working with data from IMPACTS and
+     %might not reflect the typical habit breakdown of modes from HAIC/HIWC
 
 %Additional inputs to TrimodalityTest.m, set in Input.m:
 
@@ -58,10 +63,12 @@ function [tr, ba, bb, un, hix, hix2, mp3, mp4, mp5, mp6] =...
 uonly = 0;
 
 %testsH = cutoffs to test for large diameter bimodality, in ascending order
-testsH = [0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17];
+testsH = logspace(-1.3, -0.5, 9);
+testsH = testsH+1e-5;
 
 %testsL = cutoffs to test for small diameter bimodality, in descending order
-testsL = [0.02,0.019,0.018,0.017,0.016,0.015,0.014,0.013,0.012,0.011,0.01,0.009,0.008];
+testsL = logspace(-1.6, -2.1, 6);
+testsL = testsL+1e-5;
 
 %alpha = "sensitivity"
     %suppose you have a trimodal distribution with cutoffs at 0.015 and 0.1 cm
@@ -99,6 +106,15 @@ cts = chi2inv(conf,3);
         %equation in line above used to define upper_bound and lower_bound
 lamlam = 2.5; %based on typical lambda values from Darwin
 
+%hdb2 = method controlling whether testsH is arbitrary or derived from habits
+    %0 for arbitrary testsH
+    %1 for testsH derived from habits (Important: use only if you are confident in habit classification, and be sure to test against hdb2=0)
+hdb2 = 0;
+
+if hdb2
+    testsH = idx;
+end
+
 [tr, ba, bb, un, hix, hix2, mp3, mp4, mp5, mp6] =...
     TrimodalityTest(uonly, testsH, testsL, alpha, time, intmethod, fit_moments,...
-    bins, bins_diff, sd, iwc, rawcount, sqError, decider, conf, cts, lamlam);
+    bins, bins_diff, sd, iwc, rawcount, sqError, decider, conf, cts, lamlam, hdb2);
