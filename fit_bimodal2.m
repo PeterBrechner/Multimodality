@@ -61,7 +61,7 @@ fit6 = N02 ./ ( lambda2.^1 ) .* exp(loginc8+loggam4);
 fit7 = N0 .* lambda.^mu .* 0.03.^mu .* exp(-lambda*0.03);
 fit8 = N02 .* lambda2.^mu2 .* 0.03.^mu2 .* exp(-lambda2*0.03);
 
-linc1 = log(5*(obs1(1)+obs2(1))/cfit(1));
+linc1 = log(cfit(1)/(obs1(1)+obs2(1)));
 linc2 = log(2*(obs1(5)+obs2(5))/cfit(5));
 
 edt1 = (obs1(2)/obs1(1)-Dmin)/(f21(2)/f21(1)-Dmin)/alpha-1;
@@ -83,7 +83,7 @@ error_vector(12) = 1000*(1+params(2)-params(5))*(1-sign(params(5)-params(2)));
 error_vector(13) = 1000*(params(6)/params(3))*(1-sign(params(3)-params(6)));
 error_vector(14) = 1000*fit4/fit3*(1-sign(alpha^2*fit3/fit4+alpha^2-1));
 error_vector(15) = 1000*fit5/fit6*(1-sign(alpha^2*fit6/fit5+alpha^2-1));
-error_vector(16) = 100*(-linc1)*(1-sign(linc1));
+error_vector(16) = 0.5*(log(1+linc1))^0.5*(1+sign(linc1));
 error_vector(17) = 100*(-linc2)*(1-sign(linc2));
 error_vector(18) = 100*(fit8/fit7-alpha^2/(1-alpha^2))*(1-sign(alpha^2*fit7-(1-alpha^2)*fit8));
 error_vector(19) = 100*((1-alpha^2)*obs1(1)-fit3)/sigma1(1)*(1-sign(fit3-(1-alpha^2)*obs1(1)));
