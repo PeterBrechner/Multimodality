@@ -22,12 +22,12 @@ for i = 1:length(x)
     cfit(i) = N0 ./ ( lambda.^(1+x(i)) ) .* exp(loggam);
 end
 
-linc1 = log(5*obs(1)/cfit(1));
+linc1 = log(cfit(1)/obs(1));
 linc2 = log(2*obs(3)/cfit(3));
 
 error_vector = zeros(1,5);
 for i=1:3
     error_vector(i) = (fit(i) - obs(i))/sigma(i);
 end
-error_vector(4) = 100*(-linc1)*(1-sign(linc1));
+error_vector(4) = 0.5*(log(1+linc1))^0.5*(1+sign(linc1));
 error_vector(5) = 100*(-linc2)*(1-sign(linc2));
